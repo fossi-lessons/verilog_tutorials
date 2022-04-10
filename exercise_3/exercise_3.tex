@@ -182,6 +182,11 @@ Consider what you need to save in order to bypass the correct data from write to
 read as well as how to tell whether you should use the data you've saved or the
 data from the memory.
 
+Your implemented memory should have the same latency as the original memory
+primitive in cases without collision and backpressuring. This means that it
+should be able to accept a write and/or read in every cycle and reads should
+output in the cycle after they are requested.
+
 \subsection*{Testing}
 Feel free to add more tests in \texttt{sim\_main.cpp} as you see fit. At thet
 moment, the success output looks like
