@@ -11,6 +11,7 @@
 
 #define CLOCK_HALF_CYCLE_NS 5
 #define CLOCK_CYCLE_NS (CLOCK_HALF_CYCLE_NS * 2)
+#define CYCLE_TIMEOUT 1024
 
 static void init_context(const std::unique_ptr<VerilatedContext> &contextp,
                          int argc,
@@ -78,21 +79,37 @@ rd_resp_val: %d, product: %hx\n",
 
 static void do_multiply(const std::unique_ptr<VerilatedContext> &contextp,
                         const std::unique_ptr<Vmultiplier_top> &top,
-                        uint8_t operand_a, uint8_t operand_b) {
-    while (!top->req_rdy) {
-        clock_cycle(contextp, top);
-    }
+                        uint8_t operand_a, uint8_t operand_b, uint64_t timeout_cycles) {
+    uint64_t cycle_count = 0;
 
     top->req_val = 1;
     top->req_operand_a = operand_a;
     top->req_operand_b = operand_b;
 
-    clock_cycle(contextp, top);
+    half_clock_cycle (contextp, top);
+
+    cycle_count = 0;
+    while (!top->req_rdy) {
+        cycle_count++;
+        if (cycle_count == timeout_cycles) {
+            VL_PRINTF("[%" VL_PRI64 "d] may have timed out waiting for req_rdy \
+to go high\n", contextp->time());
+        }
+        clock_cycle(contextp, top);
+    }
+    half_clock_cycle(contextp, top);
+
     top->req_val = 0;
     top->resp_rdy = 1;
 
     half_clock_cycle(contextp, top);
+    cycle_count = 0;
     while (!top->resp_val) {
+        cycle_count++;
+        if (cycle_count == timeout_cycles) {
+            VL_PRINTF("[%" VL_PRI64 "d] may have timed out waiting for resp_val \
+to go high\n", contextp->time());
+        }
         clock_cycle(contextp, top);
     }
     check_output(contextp, top, operand_a * operand_b);
@@ -141,18 +158,18 @@ int main(int argc, char** argv, char** env) {
      * Try just multiplying by 1
      **************************************************************************/
     printf("Run some basic test cases\n");
-    do_multiply(contextp, top, 4, 1);
+    do_multiply(contextp, top, 4, 1, CYCLE_TIMEOUT);
     
     /***************************************************************************
      * Try just multiplying by 0
      **************************************************************************/
-    do_multiply(contextp, top, 4, 0);
+    do_multiply(contextp, top, 4, 0, CYCLE_TIMEOUT);
     
     /***************************************************************************
      * Try flipping the operands
      **************************************************************************/
-    do_multiply(contextp, top, 1, 4);
-    do_multiply(contextp, top, 0, 4);
+    do_multiply(contextp, top, 1, 4, CYCLE_TIMEOUT);
+    do_multiply(contextp, top, 0, 4, CYCLE_TIMEOUT);
     
     /***************************************************************************
      * Test all the possible combinations
@@ -161,7 +178,7 @@ int main(int argc, char** argv, char** env) {
     printf("Run exhaustive testing\n");
     for (uint16_t a = 0; a <= (uint16_t)0xff; a++) {
         for (uint16_t b = 0; b <= (uint16_t)0xff; b++) {
-            do_multiply(contextp, top, (uint8_t)a, (uint8_t)b);
+            do_multiply(contextp, top, (uint8_t)a, (uint8_t)b, CYCLE_TIMEOUT);
         }
     }
     
@@ -169,15 +186,16 @@ int main(int argc, char** argv, char** env) {
      * Make sure we can change the inputs while the request is in progress
      **************************************************************************/
     printf("Testing changing inputs while a request is in progress\n");
-    while (!top->req_rdy) {
-        clock_cycle(contextp, top);
-    }
 
     top->req_val = 1;
     top->req_operand_a = 1;
     top->req_operand_b = 10;
+    half_clock_cycle(contextp, top);
+    while (!top->req_rdy) {
+        clock_cycle(contextp, top);
+    }
+    half_clock_cycle(contextp, top);
 
-    clock_cycle(contextp, top);
     top->req_val = 0;
     top->resp_rdy = 1;
     clock_cycle(contextp, top);
@@ -201,16 +219,17 @@ int main(int argc, char** argv, char** env) {
      * Make sure we can backpressure the input
      **************************************************************************/
     printf("Test backpressuring the input\n"); 
-    while (!top->req_rdy) {
-        clock_cycle(contextp, top);
-    }
 
     top->req_val = 1;
     top->req_operand_a = 15;
     top->req_operand_b = 1;
     top->resp_rdy = 0;
-
     half_clock_cycle(contextp, top);
+    
+    while (!top->req_rdy) {
+        clock_cycle(contextp, top);
+    }
+
     while (!top->resp_val) {
         clock_cycle(contextp, top);
     }
