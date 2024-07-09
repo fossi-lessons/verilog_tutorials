@@ -130,6 +130,7 @@ int main(int argc, char** argv, char** env) {
     /***************************************************************************
      * Write some data
      **************************************************************************/
+    half_clock_cycle(contextp, top);
     top->wr_req_val = 1;
     top->wr_req_addr = 0;
     top->wr_req_data = 0xab;
@@ -141,8 +142,8 @@ int main(int argc, char** argv, char** env) {
         VL_PRINTF("[%" VL_PRI64 "d] ERROR: wr_req_rdy not high when it should be\n",
                     contextp->time());
     }
-    half_clock_cycle(contextp, top);
 
+    half_clock_cycle(contextp, top);
     top->wr_req_val = 0;
     clock_cycle(contextp, top);
 

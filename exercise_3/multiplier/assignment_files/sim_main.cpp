@@ -158,6 +158,7 @@ int main(int argc, char** argv, char** env) {
      * Try just multiplying by 1
      **************************************************************************/
     printf("Run some basic test cases\n");
+    half_clock_cycle(contextp, top);
     do_multiply(contextp, top, 4, 1, CYCLE_TIMEOUT);
     
     /***************************************************************************
