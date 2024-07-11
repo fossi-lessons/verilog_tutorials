@@ -34,14 +34,13 @@ some times like you are just writing code, you should remember that this is not
 software and at the end of the day, you should have a rough idea of how the
 Verilog you write is going to translate into hardware structures. 
 
-\section*{Verilog 101}
-\subsection*{Modules}
-\subsubsection*{Interface}
-\subsubsection*{Instantiation}
-\subsection*{Wires}
-\subsubsection*{Reg/Wire/Logic}
-\subsection*{Bit literals}
-\subsection*{Basic Combinational Logic}
+\section*{Verilog Resources}
+There are many guides on (System)Verilog syntax that explain how to write Verilog. However, not every feature that these guides introduce are compatible with all tools and some features are not synthesizable (i.e. they will not work when you run the code through ASIC/FPGA tools to produce actual hardware). Rather than try and reproduce the guides, here are some links to guides that I would recommend:
+\begin{itemize}
+    \item \hyperlink{https://www.chipverify.com}{ChipVerify} is a good place to start for overall syntax and figuring out what you can do with the language, but don't skip the other guides.
+    \item \hyperlink{https://github.com/sifferman/labs-with-cva6/blob/main/guides/synthesis.md}{This Github} page describes the specific structures you should be using to write synthesizable (System)Verilog
+    \item \hyperlink{https://github.com/lowRISC/style-guides/blob/master/VerilogCodingStyle.md}{This is fairly strict, but comprehensive style guide} used by an open-source RISC-V core. I don't follow it strictly, but I like a lot of it.
+\end{itemize}
 
 \section*{Steps}
 \textbf{Step 0: Install Verilator and GTKwave}\\
